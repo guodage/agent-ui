@@ -38,8 +38,6 @@ const AgentMessage = ({ message, isLastMessage = false }: MessageProps) => {
       .replace(/\\n\\n/g, '\n\n')        // 处理标准转义的双换行
       .replace(/\\n/g, '\n')             // 处理标准转义的单换行
     
-    console.log('📝 使用统一MarkdownRenderer');
-    
     messageContent = (
       <div className="flex w-full flex-col gap-4">
         <MarkdownRenderer>{processedContent}</MarkdownRenderer>

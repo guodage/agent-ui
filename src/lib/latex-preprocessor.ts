@@ -119,7 +119,6 @@ export function preprocessLaTeX(content: string): string {
 
   return content;
   } catch (error) {
-    console.error('❌ preprocessLaTeX 处理失败:', error);
     return content;
   }
 }

@@ -86,17 +86,14 @@ function parseBuffer(
         
         processChunk(parsed, onChunk)
       } catch (parseError) {
-        console.warn('⚠️ JSON解析失败:', {
-          error: parseError,
-          errorType: parseError instanceof Error ? parseError.name : 'Unknown'
-        });
+        console.warn('JSON解析失败:', parseError instanceof Error ? parseError.name : 'Unknown');
         
         // 尝试跳过这个有问题的JSON，继续处理后面的数据
         skippedBytes += jsonEndIndex - jsonStartIndex + 1
         
         // 如果累计跳过的字节数过多，可能整个数据流都有问题
         if (skippedBytes > 10000) {
-          console.error('❌ 跳过字节数过多，可能整个数据流损坏');
+          console.error('跳过字节数过多，可能整个数据流损坏');
           break
         }
       }
@@ -113,7 +110,7 @@ function parseBuffer(
   }
 
   if (skippedBytes > 0) {
-    console.warn('⚠️ 解析完成，跳过了部分损坏数据');
+    console.warn('解析完成，跳过了部分损坏数据');
   }
 
   return buffer
@@ -154,7 +151,7 @@ export default function useAIResponseStream() {
       let totalBytes = 0
       const startTime = Date.now()
       
-      console.log('🚀 开始流式连接');
+      // 开始流式连接
 
       try {
         const response = await fetch(apiUrl, {
@@ -172,7 +169,7 @@ export default function useAIResponseStream() {
               : JSON.stringify(requestBody)
         })
         
-        console.log('📡 收到响应:', response.status);
+        // 收到响应
 
         if (!response.ok) {
           const errorData = await response.json()
@@ -195,15 +192,15 @@ export default function useAIResponseStream() {
             
             const readDuration = Date.now() - readStartTime
             if (readDuration > 5000) {
-              console.warn('⚠️ 慢速读取检测');
+              // 慢速读取检测
             }
             
             if (done) {
-              console.log('🏁 流式传输完成');
+              // 流式传输完成
               
               // Process any final data in the buffer.
               if (buffer.trim()) {
-                console.log('📦 处理剩余buffer');
+                // 处理剩余buffer
                 
                 // 尝试多次解析剩余buffer，直到无法解析更多内容
                 let previousBufferLength = buffer.length
@@ -216,20 +213,20 @@ export default function useAIResponseStream() {
                   
                   if (buffer.length === previousBufferLength) {
                     // 如果buffer长度没有变化，说明无法继续解析
-                    console.warn('⚠️ 无法继续解析剩余buffer');
+                    // 无法继续解析剩余buffer
                     break
                   }
                   
                   previousBufferLength = buffer.length
                   
                   if (attemptCount > 1) {
-                    console.log(`🔄 第${attemptCount}次解析剩余buffer`);
+                    // 第${attemptCount}次解析剩余buffer
                   }
                 }
                 
                 // 如果仍有剩余内容无法解析，记录详细信息
                 if (buffer.trim()) {
-                  console.error('❌ 最终仍有无法解析的数据');
+                  console.error('最终仍有无法解析的数据');
                 }
               }
               
@@ -259,13 +256,13 @@ export default function useAIResponseStream() {
             
             await processStream()
           } catch (readError) {
-            console.error('❌ 读取chunk错误:', readError);
+            console.error('读取chunk错误:', readError);
             throw readError
           }
         }
         await processStream()
       } catch (error) {
-        console.error('❌ 流式连接错误:', error instanceof Error ? error.message : String(error));
+        console.error('流式连接错误:', error instanceof Error ? error.message : String(error));
         
         if (typeof error === 'object' && error !== null && 'detail' in error) {
           onError(new Error(String(error.detail)))

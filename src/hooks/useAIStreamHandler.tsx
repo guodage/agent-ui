@@ -301,7 +301,6 @@ const useAIChatStreamHandler = () => {
                     transcript:
                       (lastMessage.response_audio?.transcript || '') + transcript
                   }
-                  console.log('🎵 音频转录更新');
                 }
                 return newMessages
               })
@@ -415,7 +414,6 @@ const useAIChatStreamHandler = () => {
             }
           },
           onError: (error) => {
-            console.error('❌ 流式传输错误:', error.message);
             
             updateMessagesWithErrorState()
             setStreamingErrorMessage(error.message)
@@ -428,9 +426,7 @@ const useAIChatStreamHandler = () => {
               )
             }
           },
-          onComplete: () => {
-            console.log('✅ 流式传输完成');
-          }
+          onComplete: () => {}
         })
       } catch (error) {
         updateMessagesWithErrorState()
