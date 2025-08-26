@@ -1,6 +1,12 @@
 'use client'
 
 import { FC, useState } from 'react'
+import React from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
+
+import { preprocessLaTeX } from '@/lib/latex-preprocessor'
 
 import Image from 'next/image'
 import Link from 'next/link'
@@ -128,6 +134,67 @@ const InlineCode: FC<PreparedTextProps> = ({ children }) => {
     </code>
   )
 }
+
+const Pre: FC<PreparedTextProps> = ({ children }) => {
+  // 提取文本内容
+  const extractText = (element: any): string => {
+    if (typeof element === 'string') return element
+    if (typeof element === 'number') return String(element)
+    if (React.isValidElement(element)) {
+      if ((element.props as any)?.children) {
+        return extractText((element.props as any).children)
+      }
+    }
+    if (Array.isArray(element)) {
+      return element.map(extractText).join('')
+    }
+    return ''
+  }
+  
+  const content = extractText(children).trim()
+  
+  // 检查是否为纯LaTeX公式格式
+  const isPureLatexBlock = /^\$\$[\s\S]*?\$\$$/.test(content)
+  const isPureLatexBracket = /^\\\[[\s\S]*?\\\]$/.test(content)
+  const isPureLatexInline = /^\$[^\$\n]+\$$/.test(content)
+  const isPureLatexParentheses = /^\\\([\s\S]*?\\\)$/.test(content)
+  const isPureLatexEnvironment = /^\\begin\{[^}]+\}[\s\S]*?\\end\{[^}]+\}$/.test(content)
+  
+  const isPureLatex = isPureLatexBlock || isPureLatexBracket || isPureLatexInline || isPureLatexParentheses || isPureLatexEnvironment
+  
+  // 检查是否包含LaTeX公式（混合内容）
+  const hasLatexFormulas = /\\\[[\s\S]*?\\\]|\\\([^\)]*?\\\)|\$\$[\s\S]*?\$\$|(?<!\\)\$[^\$\n]+\$|\\begin\{[^}]+\}[\s\S]*?\\end\{[^}]+\}/g.test(content)
+  
+  // 如果是纯LaTeX公式或包含LaTeX公式的内容，进行LaTeX渲染
+  if (isPureLatex || hasLatexFormulas) {
+    // 预处理LaTeX内容
+    const processedContent = preprocessLaTeX(content)
+    return (
+      <div className="math-content">
+        <ReactMarkdown
+          remarkPlugins={[remarkMath]}
+          rehypePlugins={[rehypeKatex]}
+          components={{
+            p: ({ children }) => <div>{children}</div>,
+            // 防止嵌套的pre标签
+            pre: ({ children }) => <div>{children}</div>,
+            code: ({ children }) => <span className="inline-code">{children}</span>
+          }}
+        >
+          {processedContent}
+        </ReactMarkdown>
+      </div>
+    )
+  }
+  
+  // 否则正常渲染为代码块
+  return (
+    <pre className="relative overflow-x-auto rounded-sm bg-background-secondary/50 p-4 text-sm">
+      {children}
+    </pre>
+  )
+}
+
 
 const Blockquote = ({ className, ...props }: BlockquoteProps) => (
   <blockquote
@@ -269,6 +336,7 @@ export const components = {
   hr: HorizontalRule,
   blockquote: Blockquote,
   code: InlineCode,
+  pre: Pre,
   a: AnchorLink,
   img: Img,
   p: Paragraph,
