@@ -137,12 +137,12 @@ const InlineCode: FC<PreparedTextProps> = ({ children }) => {
 
 const Pre: FC<PreparedTextProps> = ({ children }) => {
   // 提取文本内容
-  const extractText = (element: any): string => {
+  const extractText = (element: unknown): string => {
     if (typeof element === 'string') return element
     if (typeof element === 'number') return String(element)
     if (React.isValidElement(element)) {
-      if ((element.props as any)?.children) {
-        return extractText((element.props as any).children)
+      if ((element.props as Record<string, unknown>)?.children) {
+        return extractText((element.props as Record<string, unknown>).children)
       }
     }
     if (Array.isArray(element)) {
@@ -253,16 +253,16 @@ const Img = ({ src, alt }: ImgProps) => {
         <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-md bg-secondary/50 text-muted">
           <Paragraph className="text-primary">Image unavailable</Paragraph>
           <Link
-            href={src}
+            href={typeof src === 'string' ? src : '#'}
             target="_blank"
             className="max-w-md truncate underline"
           >
-            {src}
+            {typeof src === 'string' ? src : 'Invalid source'}
           </Link>
         </div>
       ) : (
         <Image
-          src={src}
+          src={typeof src === 'string' ? src : ''}
           width={1280}
           height={720}
           alt={alt ?? 'Rendered image'}

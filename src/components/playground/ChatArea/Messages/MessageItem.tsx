@@ -10,10 +10,12 @@ import AgentThinkingLoader from './AgentThinkingLoader'
 
 interface MessageProps {
   message: PlaygroundChatMessage
+  isLastMessage?: boolean
 }
 
-const AgentMessage = ({ message }: MessageProps) => {
-  const { streamingErrorMessage } = usePlaygroundStore()
+const AgentMessage = ({ message, isLastMessage = false }: MessageProps) => {
+  const { streamingErrorMessage, isStreaming } = usePlaygroundStore()
+  
   let messageContent
   if (message.streamingError) {
     messageContent = (
@@ -27,9 +29,20 @@ const AgentMessage = ({ message }: MessageProps) => {
       </p>
     )
   } else if (message.content) {
+    // 🎆 简化渲染策略：统一使用MarkdownRenderer，处理换行符问题
+    // 处理流式传输中常见的转义换行符：\\n\\n -> \n\n, \\n -> \n
+    // 同时处理可能的双重转义：\\\\n -> \n
+    const processedContent = message.content
+      .replace(/\\\\n\\\\n/g, '\n\n')  // 处理双重转义的双换行
+      .replace(/\\\\n/g, '\n')          // 处理双重转义的单换行
+      .replace(/\\n\\n/g, '\n\n')        // 处理标准转义的双换行
+      .replace(/\\n/g, '\n')             // 处理标准转义的单换行
+    
+    console.log('📝 使用统一MarkdownRenderer');
+    
     messageContent = (
       <div className="flex w-full flex-col gap-4">
-        <MarkdownRenderer>{message.content}</MarkdownRenderer>
+        <MarkdownRenderer>{processedContent}</MarkdownRenderer>
         {message.videos && message.videos.length > 0 && (
           <Videos videos={message.videos} />
         )}
@@ -49,10 +62,13 @@ const AgentMessage = ({ message }: MessageProps) => {
         </div>
       )
     } else {
+      // 统一使用 MarkdownRenderer，处理音频转录中的换行符
+      const processedTranscript = message.response_audio.transcript.replace(/\\n\\n/g, '\n\n').replace(/\\n/g, '\n')
+      
       messageContent = (
         <div className="flex w-full flex-col gap-4">
           <MarkdownRenderer>
-            {message.response_audio.transcript}
+            {processedTranscript}
           </MarkdownRenderer>
           {message.response_audio.content && message.response_audio && (
             <Audios audio={[message.response_audio]} />

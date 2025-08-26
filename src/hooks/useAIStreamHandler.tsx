@@ -171,6 +171,7 @@ const useAIChatStreamHandler = () => {
           apiUrl: playgroundRunUrl,
           requestBody: formData,
           onChunk: (chunk: RunResponse) => {
+            
             if (
               chunk.event === RunEvent.RunStarted ||
               chunk.event === RunEvent.TeamRunStarted ||
@@ -221,6 +222,7 @@ const useAIChatStreamHandler = () => {
               chunk.event === RunEvent.RunResponseContent ||
               chunk.event === RunEvent.TeamRunResponseContent
             ) {
+              
               setMessages((prevMessages) => {
                 const newMessages = [...prevMessages]
                 const lastMessage = newMessages[newMessages.length - 1]
@@ -229,8 +231,24 @@ const useAIChatStreamHandler = () => {
                   lastMessage.role === 'agent' &&
                   typeof chunk.content === 'string'
                 ) {
-                  const uniqueContent = chunk.content.replace(lastContent, '')
-                  lastMessage.content += uniqueContent
+                  // 🎯 优化内容更新逻辑：智能检测增量vs完整内容
+                  let contentToAdd = ''
+                  
+                  if (chunk.content.startsWith(lastContent)) {
+                    // 情况1：chunk.content 是累积的完整内容
+                    contentToAdd = chunk.content.slice(lastContent.length)
+                  } else if (lastMessage.content.endsWith(chunk.content)) {
+                    // 情况2：chunk.content 是重复的尾部内容，跳过
+                    contentToAdd = ''
+                  } else {
+                    // 情况3：chunk.content 是纯增量内容
+                    contentToAdd = chunk.content
+                  }
+                  
+                  if (contentToAdd) {
+                    lastMessage.content += contentToAdd
+                  }
+                  
                   lastContent = chunk.content
 
                   // Handle tool calls streaming
@@ -281,8 +299,9 @@ const useAIChatStreamHandler = () => {
                   lastMessage.response_audio = {
                     ...lastMessage.response_audio,
                     transcript:
-                      lastMessage.response_audio?.transcript + transcript
+                      (lastMessage.response_audio?.transcript || '') + transcript
                   }
+                  console.log('🎵 音频转录更新');
                 }
                 return newMessages
               })
@@ -351,6 +370,7 @@ const useAIChatStreamHandler = () => {
               chunk.event === RunEvent.RunCompleted ||
               chunk.event === RunEvent.TeamRunCompleted
             ) {
+              
               setMessages((prevMessages) => {
                 const newMessages = prevMessages.map((message, index) => {
                   if (
@@ -395,6 +415,8 @@ const useAIChatStreamHandler = () => {
             }
           },
           onError: (error) => {
+            console.error('❌ 流式传输错误:', error.message);
+            
             updateMessagesWithErrorState()
             setStreamingErrorMessage(error.message)
             if (hasStorage && newSessionId) {
@@ -406,7 +428,9 @@ const useAIChatStreamHandler = () => {
               )
             }
           },
-          onComplete: () => {}
+          onComplete: () => {
+            console.log('✅ 流式传输完成');
+          }
         })
       } catch (error) {
         updateMessagesWithErrorState()

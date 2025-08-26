@@ -9,7 +9,8 @@
  * \(...\) -> $...$
  */
 export function escapeBrackets(text: string): string {
-  const pattern = /(```[\S\s]*?```|`.*?`)|\\\[([\S\s]*?[^\\])\\\]|\\\((.*?)\\\)/g;
+  // 修复正则表达式：更准确地匹配LaTeX方括号和圆括号
+  const pattern = /(```[\S\s]*?```|`.*?`)|\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/g;
   return text.replace(
     pattern,
     (
@@ -67,9 +68,11 @@ export function escapeLatexEnvironments(text: string): string {
 /**
  * LaTeX 公式预处理主函数
  * 统一处理各种 LaTeX 格式，转换为 Markdown 支持的格式
+ * 注意：只处理完整的LaTeX表达式，不处理流式传输中的不完整表达式
  */
 export function preprocessLaTeX(content: string): string {
-  // 步骤一：保护代码块
+  try {
+    // 步骤一：保护代码块
   const codeBlocks: string[] = [];
   content = content.replace(/(```[\s\S]*?```|`[^`\n]+`)/g, (match, code) => {
     codeBlocks.push(code);
@@ -92,14 +95,31 @@ export function preprocessLaTeX(content: string): string {
   // 步骤五：将占位符 <<CODE_BLOCK_n>> 替换回原始代码块内容
   content = content.replace(/<<CODE_BLOCK_(\d+)>>/g, (_, index) => codeBlocks[parseInt(index)]);
 
-  // 步骤六：将 \[...\] 和 \(...\) 转换为 $$...$$ 和 $...$
+  // 步骤六：将完整的 \[...\] 和 \(...\) 转换为 $$...$$ 和 $...$
   content = escapeBrackets(content);
   
   // 步骤七：将 LaTeX 环境转换为 $$...$$ 格式
   content = escapeLatexEnvironments(content);
   
-  // 步骤八：对化学公式中的 \ce{} 和 \pu{} 命令添加额外的反斜杠转义
+  // 步骤八：修复LaTeX语法错误（仅限完整表达式）
+  // 修复分数语法错误：\frac-b -> \frac{-b
+  content = content.replace(/\\frac(-[^\s{]+)/g, '\\frac{$1');
+  
+  // 修复双大括号：\sqrt{{...}} -> \sqrt{...}
+  content = content.replace(/\\sqrt\{\{([^}]+)\}\}/g, '\\sqrt{$1}');
+  
+  // 修复不完整的分数表达式：确保\frac后面有两个大括号参数
+  content = content.replace(/\\frac\{([^}]+)\}([^{\s}][^\s}]*)/g, '\\frac{$1}{$2}');
+  
+  // 特殊修复：处理分母为单个字母或数字的情况
+  content = content.replace(/\\frac\{([^}]+)\}([a-zA-Z0-9])(?![a-zA-Z0-9}])/g, '\\frac{$1}{$2}');
+  
+  // 步骤九：对化学公式中的 \ce{} 和 \pu{} 命令添加额外的反斜杠转义
   content = escapeMhchem(content);
 
   return content;
+  } catch (error) {
+    console.error('❌ preprocessLaTeX 处理失败:', error);
+    return content;
+  }
 }

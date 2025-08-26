@@ -58,7 +58,7 @@ const References: FC<ReferenceProps> = ({ references }) => (
   </div>
 )
 
-const AgentMessageWrapper = ({ message }: MessageWrapperProps) => {
+const AgentMessageWrapper = ({ message, isLastMessage }: MessageWrapperProps) => {
   return (
     <div className="flex flex-col gap-y-9">
       {message.extra_data?.reasoning_steps &&
@@ -120,7 +120,7 @@ const AgentMessageWrapper = ({ message }: MessageWrapperProps) => {
           </div>
         </div>
       )}
-      <AgentMessage message={message} />
+      <AgentMessage message={message} isLastMessage={isLastMessage} />
     </div>
   )
 }
