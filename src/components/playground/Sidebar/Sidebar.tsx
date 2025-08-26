@@ -14,14 +14,32 @@ import { toast } from 'sonner'
 import { useQueryState } from 'nuqs'
 import { truncateText } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useRouter } from 'next/navigation'
 
 const ENDPOINT_PLACEHOLDER = 'NO ENDPOINT ADDED'
-const SidebarHeader = () => (
-  <div className="flex items-center gap-2">
-    <Icon type="agno" size="xs" />
-    <span className="text-xs font-medium uppercase text-white">Agent UI</span>
-  </div>
-)
+const SidebarHeader = () => {
+  const router = useRouter()
+  
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <Icon type="agno" size="xs" />
+        <span className="text-xs font-medium uppercase text-white">Agent UI</span>
+      </div>
+      <div className="flex-1 flex justify-center">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push('/changelog')}
+          className="h-auto px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-primary"
+        >
+          更新日志
+        </Button>
+      </div>
+      <div className="w-16" /> {/* 占位符保持平衡 */}
+    </div>
+  )
+}
 
 const NewChatButton = ({
   disabled,
