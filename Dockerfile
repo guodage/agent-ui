@@ -1,19 +1,24 @@
-# 使用 Node.js 官方镜像
+# 使用包含pnpm的Node.js镜像
 FROM node:18-alpine AS base
 
 # 安装依赖阶段
 FROM base AS deps
-# 检查 https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
+
+# 安装pnpm，使用npm全局安装避免corepack网络问题
+RUN npm install -g pnpm --registry=https://registry.npmmirror.com
 
 # 安装依赖
 COPY package.json pnpm-lock.yaml* ./
-RUN corepack enable pnpm && pnpm i
+RUN pnpm config set registry https://registry.npmmirror.com && pnpm i --frozen-lockfile
 
 # 构建阶段
 FROM base AS builder
 WORKDIR /app
+
+# 安装pnpm
+RUN npm install -g pnpm --registry=https://registry.npmmirror.com
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
@@ -22,7 +27,7 @@ COPY . .
 # 在构建期间禁用遥测
 ENV NEXT_TELEMETRY_DISABLED 1
 
-RUN corepack enable pnpm && pnpm run build
+RUN pnpm config set registry https://registry.npmmirror.com && pnpm run build
 
 # 生产镜像，复制所有文件并运行 next
 FROM base AS runner
