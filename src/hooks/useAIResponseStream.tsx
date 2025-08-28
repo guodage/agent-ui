@@ -45,7 +45,6 @@ function parseBuffer(
     // Iterate through the buffer to find the end of the JSON object
     for (let i = jsonStartIndex; i < buffer.length; i++) {
       const char = buffer[i]
-      const prevChar = i > 0 ? buffer[i - 1] : ''
 
       // Handle escape sequences properly
       if (inString) {
@@ -148,8 +147,6 @@ export default function useAIResponseStream() {
       // Buffer to accumulate partial JSON data.
       let buffer = ''
       let chunkCount = 0
-      let totalBytes = 0
-      const startTime = Date.now()
       
       // 开始流式连接
 
@@ -235,8 +232,6 @@ export default function useAIResponseStream() {
             }
             
             chunkCount++
-            const chunkSize = value?.length || 0
-            totalBytes += chunkSize
             
             if (chunkCount <= 10 || chunkCount % 50 === 0) {
               // 定期记录进度

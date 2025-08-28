@@ -118,7 +118,7 @@ export function preprocessLaTeX(content: string): string {
   content = escapeMhchem(content);
 
   return content;
-  } catch (error) {
+  } catch {
     return content;
   }
 }

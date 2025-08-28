@@ -13,8 +13,8 @@ interface MessageProps {
   isLastMessage?: boolean
 }
 
-const AgentMessage = ({ message, isLastMessage = false }: MessageProps) => {
-  const { streamingErrorMessage, isStreaming } = usePlaygroundStore()
+const AgentMessage = ({ message }: MessageProps) => {
+  const { streamingErrorMessage } = usePlaygroundStore()
   
   let messageContent
   if (message.streamingError) {

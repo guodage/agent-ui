@@ -14,6 +14,13 @@ import { toast } from 'sonner'
 import { useQueryState } from 'nuqs'
 import { truncateText } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
 import { useRouter } from 'next/navigation'
 
 const ENDPOINT_PLACEHOLDER = 'NO ENDPOINT ADDED'
@@ -87,6 +94,20 @@ const Endpoint = () => {
   const [, setAgentId] = useQueryState('agent')
   const [, setSessionId] = useQueryState('session')
 
+  // 定义默认端点选项
+  const defaultEndpoints = [
+    'http://localhost:8000',
+    'https://agent-demo.8btc-ops.com'
+  ]
+
+  const handleSelectEndpoint = (value: string) => {
+    if (value === 'custom') {
+      // 如果选择自定义，不改变编辑模式，让用户继续输入
+      return
+    }
+    setEndpointValue(value)
+  }
+
   useEffect(() => {
     setEndpointValue(selectedEndpoint)
     setIsMounted(true)
@@ -135,23 +156,41 @@ const Endpoint = () => {
     <div className="flex flex-col items-start gap-2">
       <div className="text-xs font-medium uppercase text-primary">Endpoint</div>
       {isEditing ? (
-        <div className="flex w-full items-center gap-1">
-          <input
-            type="text"
-            value={endpointValue}
-            onChange={(e) => setEndpointValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="flex h-9 w-full items-center text-ellipsis rounded-xl border border-primary/15 bg-accent p-3 text-xs font-medium text-muted"
-            autoFocus
-          />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSave}
-            className="hover:cursor-pointer hover:bg-transparent"
-          >
-            <Icon type="save" size="xs" />
-          </Button>
+        <div className="flex w-full flex-col gap-2">
+          <Select onValueChange={handleSelectEndpoint}>
+            <SelectTrigger className="h-9 w-full rounded-xl border border-primary/15 bg-accent text-xs font-medium text-muted">
+              <SelectValue placeholder="选择预设端点" />
+            </SelectTrigger>
+            <SelectContent className="border-none bg-primaryAccent font-dmmono shadow-lg">
+              {defaultEndpoints.map((endpoint) => (
+                <SelectItem key={endpoint} value={endpoint} className="cursor-pointer">
+                  <div className="text-xs font-medium">{endpoint}</div>
+                </SelectItem>
+              ))}
+              <SelectItem value="custom" className="cursor-pointer">
+                <div className="text-xs font-medium text-muted-foreground">自定义端点</div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex w-full items-center gap-1">
+            <input
+              type="text"
+              value={endpointValue}
+              onChange={(e) => setEndpointValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="flex h-9 w-full items-center text-ellipsis rounded-xl border border-primary/15 bg-accent p-3 text-xs font-medium text-muted"
+              placeholder="输入自定义端点或直接修改"
+              autoFocus
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleSave}
+              className="hover:cursor-pointer hover:bg-transparent"
+            >
+              <Icon type="save" size="xs" />
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="flex w-full items-center gap-1">
@@ -245,7 +284,7 @@ const Sidebar = () => {
 
   return (
     <motion.aside
-      className="relative flex h-screen shrink-0 grow-0 flex-col overflow-hidden px-2 py-3 font-dmmono"
+      className="relative flex h-screen shrink-0 grow-0 flex-col overflow-hidden bg-background/80 px-2 py-3 font-dmmono"
       initial={{ width: '16rem' }}
       animate={{ width: isCollapsed ? '2.5rem' : '16rem' }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
